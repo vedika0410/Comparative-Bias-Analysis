@@ -11,6 +11,8 @@ from src.fairness_metrics import (
 from src.evaluation import evaluate_performance
 from src.models import train_svm_model
 from src.traditional_models import train_word2vec_model
+from src.traditional_models import train_glove_model
+from src.transformer_models import train_bert_model
 
 def main():
     # Load data
@@ -88,6 +90,51 @@ def main():
     print("Age DPD:", round(demographic_parity_difference(w2v_y_pred, w2v_A_age), 4))
     print("Age EOD:", round(equal_opportunity_difference(w2v_y_test, w2v_y_pred, w2v_A_age), 4))
 
+    # =============================
+    # GloVe + Logistic Regression
+    # =============================
+
+    glove_model, glove_test_idx, glove_y_test, glove_y_pred = train_glove_model(df)
+
+    glove_perf = evaluate_performance(glove_y_test, glove_y_pred)
+
+    print("\n=== GloVe + LR Performance ===")
+    for k, v in glove_perf.items():
+        print(f"{k}: {v:.4f}")
+
+    glove_A_gender = df.loc[glove_test_idx, "gender_binary"]
+    glove_A_age = df.loc[glove_test_idx, "age_old_binary"]
+
+    print("\n=== GloVe + LR Fairness ===")
+    print("Gender DPD:", round(demographic_parity_difference(glove_y_pred, glove_A_gender), 4))
+    print("Gender EOD:", round(equal_opportunity_difference(glove_y_test, glove_y_pred, glove_A_gender), 4))
+    print("Age DPD:", round(demographic_parity_difference(glove_y_pred, glove_A_age), 4))
+    print("Age EOD:", round(equal_opportunity_difference(glove_y_test, glove_y_pred, glove_A_age), 4))
+
+    # =============================
+    # BERT Transformer Model
+    # =============================
+
+    bert_model, bert_test_idx, bert_y_test, bert_y_pred = train_bert_model(
+        df,
+        epochs=2,
+        batch_size=8
+    )
+
+    bert_perf = evaluate_performance(bert_y_test, bert_y_pred)
+
+    print("\n=== BERT Performance ===")
+    for k, v in bert_perf.items():
+        print(f"{k}: {v:.4f}")
+
+    bert_A_gender = df.loc[bert_test_idx, "gender_binary"]
+    bert_A_age = df.loc[bert_test_idx, "age_old_binary"]
+
+    print("\n=== BERT Fairness ===")
+    print("Gender DPD:", round(demographic_parity_difference(bert_y_pred, bert_A_gender), 4))
+    print("Gender EOD:", round(equal_opportunity_difference(bert_y_test, bert_y_pred, bert_A_gender), 4))
+    print("Age DPD:", round(demographic_parity_difference(bert_y_pred, bert_A_age), 4))
+    print("Age EOD:", round(equal_opportunity_difference(bert_y_test, bert_y_pred, bert_A_age), 4))
+
 if __name__ == "__main__":
     main()
-
